@@ -90,12 +90,20 @@ GSSECURITY Keys::getSecurity()
 
 const char* Keys::getSSID()
 {
+#ifdef MY_SSID
+    return MY_SSID;
+#else
     return data->ssid;
+#endif
 }
 
 const char* Keys::getPassword()
 {
+#ifdef MY_PASSWORD
+    return MY_PASSWORD;
+#else
     return data->password;
+#endif
 }
 
 const char* Keys::getKey()
