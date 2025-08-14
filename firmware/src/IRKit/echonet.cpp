@@ -1,121 +1,151 @@
-#include <SPI.h>
-#include <Ethernet.h>
-#include <EthernetUdp.h>
-
 #include "echonet.h"
+#include "log.h"
 
-// ==== ネットワーク設定 ====
-//byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }; // 任意
-//IPAddress ip(192, 168, 1, 123); // 固定IP
-const IPAddress mcast(224, 0, 23, 0);
-const uint16_t EL_PORT = 3610;
+#define EL_PORT 3610
+#define MCAST_A 224
+#define MCAST_B 0
+#define MCAST_C 23
+#define MCAST_D 0
 
-// EOJ 構造体
-struct EOJ { uint8_t cg, cc, ic; };
+// EOJ 定数（配列を持たない）
+#define SEOJ_NODE_CG 0x05
+#define SEOJ_NODE_CC 0xFF
+#define SEOJ_NODE_IC 0x01
+#define DEOJ_ALL_CG  0x0E
+#define DEOJ_ALL_CC  0xF0
+#define DEOJ_ALL_IC  0x01
 
-const EOJ SEOJ_NODE = {0x05, 0xFF, 0x01};
-const EOJ DEOJ_ALL  = {0x0E, 0xF0, 0x01};
+#define EOJ_AC_CG  0x01
+#define EOJ_AC_CC  0x30
+#define EOJ_AC_IC  0x01
+#define EOJ_LT_CG  0x02
+#define EOJ_LT_CC  0x90
+#define EOJ_LT_IC  0x01
 
-const EOJ EOJ_AIRCON   = {0x01, 0x30, 0x01};
-const EOJ EOJ_LIGHTING = {0x02, 0x90, 0x01};
+// ESV
+#define ESV_INF      0x73
+#define ESV_INF_REQ  0x63
 
-const EOJ INST_LIST[] = { EOJ_AIRCON, EOJ_LIGHTING };
-const uint8_t INST_COUNT = sizeof(INST_LIST) / sizeof(INST_LIST[0]);
+// 電源 EPC 値
+#define EPC_POWER    0x80
+#define ON_0x30      0x30
+#define OFF_0x31     0x31
 
-enum { ESV_INF_REQ=0x63, ESV_INF=0x73 };
-uint16_t TID = 1;
+// インスタンスリスト通知 EPC
+#define EPC_INSTLIST 0xD5
 
 static EthernetUDP udp;
+//static IPAddress mcast(MCAST_A, MCAST_B, MCAST_C, MCAST_D);
+static uint16_t TID = 1;
 
-// === フレーム生成 ===
-size_t build1EPC(uint8_t* buf, size_t cap, EOJ seoj, EOJ deoj,
-                 uint8_t esv, uint8_t epc, const uint8_t* edt, uint8_t pdc) {
-  if (cap < 14 + pdc) return 0;
-  size_t i = 0;
-  buf[i++] = 0x10; buf[i++] = 0x81;
-  buf[i++] = (TID >> 8) & 0xFF; buf[i++] = TID & 0xFF;
-  buf[i++] = seoj.cg; buf[i++] = seoj.cc; buf[i++] = seoj.ic;
-  buf[i++] = deoj.cg; buf[i++] = deoj.cc; buf[i++] = deoj.ic;
-  buf[i++] = esv;
-  buf[i++] = 0x01;
-  buf[i++] = epc;
-  buf[i++] = pdc;
-  for (uint8_t k = 0; k < pdc; k++) buf[i++] = edt[k];
-  return i;
+// 送信ヘッダを逐次書き込み（OPC=1固定）
+static inline void begin1EPC(uint8_t se_cg,uint8_t se_cc,uint8_t se_ic,
+                             uint8_t de_cg,uint8_t de_cc,uint8_t de_ic,
+                             uint8_t esv, uint8_t epc, uint8_t pdc)
+{
+  udp.write((uint8_t)0x10); udp.write((uint8_t)0x81);       // EHD1,2
+  udp.write((uint8_t)(TID>>8)); udp.write((uint8_t)TID);    // TID
+  udp.write(se_cg); udp.write(se_cc); udp.write(se_ic);     // SEOJ
+  udp.write(de_cg); udp.write(de_cc); udp.write(de_ic);     // DEOJ
+  udp.write(esv);                                           // ESV
+  udp.write((uint8_t)0x01);                                 // OPC=1
+  udp.write(epc);                                           // EPC
+  udp.write(pdc);                                           // PDC
 }
 
-// (1) ネット参加アナウンス（一回のみ実行）
-void el_announce_join() {
- udp.begin(EL_PORT); // W5100/5500はマルチキャストJOIN不要で受信可（LAN内全受信）
+// (1) ネット参加アナウンス：インスタンスリスト通知（INF, EPC=D5）をマルチキャスト
+void el_init() {
+  MAINLOG_PRINTLN("ECHONET Lite: join announce.");
+  IPAddress mcast(MCAST_A, MCAST_B, MCAST_C, MCAST_D);
 
-
-  uint8_t edt[1 + 3*8]; uint8_t k = 0;
-  edt[k++] = INST_COUNT;
-  for (uint8_t n=0; n<INST_COUNT; n++) {
-    edt[k++] = INST_LIST[n].cg;
-    edt[k++] = INST_LIST[n].cc;
-    edt[k++] = INST_LIST[n].ic;
-  }
-  uint8_t pkt[64];
-  size_t len = build1EPC(pkt, sizeof(pkt), SEOJ_NODE, DEOJ_ALL, ESV_INF, 0xD5, edt, k);
+  udp.begin(EL_PORT);
   udp.beginPacket(mcast, EL_PORT);
-  udp.write(pkt, len);
-  udp.endPacket();
-  TID++;
-}
-/*
-
-// (2) 電源変更通知
-void notify_power_change(const EOJ& obj, bool on) {
-  uint8_t val = on ? 0x30 : 0x31;
-  uint8_t pkt[48];
-  size_t len = build1EPC(pkt, sizeof(pkt), obj, DEOJ_ALL, ESV_INF, 0x80, &val, 1);
-  udp.beginPacket(mcast, EL_PORT);
-  udp.write(pkt, len);
+  begin1EPC(SEOJ_NODE_CG,SEOJ_NODE_CC,SEOJ_NODE_IC,
+            DEOJ_ALL_CG, DEOJ_ALL_CC, DEOJ_ALL_IC,
+            ESV_INF, EPC_INSTLIST, 1 + 3*2); // 個数1 + EOJ×2
+  udp.write((uint8_t)2);                  // 個数
+  // EOJ #1: Aircon
+  udp.write((uint8_t)EOJ_AC_CG); udp.write((uint8_t)EOJ_AC_CC); udp.write((uint8_t)EOJ_AC_IC);
+  // EOJ #2: Lighting
+  udp.write((uint8_t)EOJ_LT_CG); udp.write((uint8_t)EOJ_LT_CC); udp.write((uint8_t)EOJ_LT_IC);
   udp.endPacket();
   TID++;
 }
 
-// (3) INF_REQ(D5) に応答
-void respond_instance_list_req(const uint8_t* buf, int len, IPAddress rip, uint16_t rport) {
+// (2) INF_REQ(EPC=D5) へのユニキャスト応答（EDTは逐次書き込み）
+void respond_instance_list_req(const uint8_t *buf, int len, IPAddress rip, uint16_t rport) {
   if (len < 14) return;
   if (buf[0]!=0x10 || buf[1]!=0x81) return;
-  if (buf[10] != ESV_INF_REQ) return;
-  if (buf[11] != 0x01) return;
-  if (buf[12] != 0xD5) return;
+  if (buf[10]!=ESV_INF_REQ) return;
+  if (buf[11]!=0x01) return;        // OPC=1のみ対応
+  if (buf[12]!=EPC_INSTLIST) return;
 
-  uint8_t edt[1 + 3*8]; uint8_t k = 0;
-  edt[k++] = INST_COUNT;
-  for (uint8_t n=0; n<INST_COUNT; n++) {
-    edt[k++] = INST_LIST[n].cg;
-    edt[k++] = INST_LIST[n].cc;
-    edt[k++] = INST_LIST[n].ic;
-  }
-  EOJ req_src = { buf[4], buf[5], buf[6] };
-  uint8_t pkt[64];
-  size_t out = build1EPC(pkt, sizeof(pkt), SEOJ_NODE, req_src, ESV_INF, 0xD5, edt, k);
+  //MAINLOG_PRINTLN("ECHONET Lite: INF_REQ(EPC=D5) received. Replying.");
+
+  // 相手SEOJ（buf[4..6]）をDEOJにセットして返す
   udp.beginPacket(rip, rport);
-  udp.write(pkt, out);
+  begin1EPC(SEOJ_NODE_CG,SEOJ_NODE_CC,SEOJ_NODE_IC,
+            buf[4], buf[5], buf[6],
+            ESV_INF, EPC_INSTLIST, 1 + 3*2);
+  udp.write((uint8_t)2);
+  udp.write((uint8_t)EOJ_AC_CG); udp.write((uint8_t)EOJ_AC_CC); udp.write((uint8_t)EOJ_AC_IC);
+  udp.write((uint8_t)EOJ_LT_CG); udp.write((uint8_t)EOJ_LT_CC); udp.write((uint8_t)EOJ_LT_IC);
   udp.endPacket();
   TID++;
 }
-*/
+
+void el_loop(){
+  if( TID==1 ) return ; // Not initialized
+  int p = udp.parsePacket();
+  if (p <= 0) return ;
+
+  //uint8_t rxbuf[48];  // 14バイト超あれば十分（安全に48バイト）
+  uint8_t rxbuf[15];
+  int n = udp.read(rxbuf, (p < (int)sizeof(rxbuf)) ? p : (int)sizeof(rxbuf));
+  respond_instance_list_req(rxbuf, n, udp.remoteIP(), udp.remotePort());
+
+}
+
+// (3) 電源が変わった時の状態通知（対象EOJの EPC=0x80 を INF でマルチキャスト）
+void el_notify_power_change(bool aircon //true=エアコン, false=照明
+  , bool on) {
+  //MAINLOG_PRINTLN("ECHONET Lite: Announce power status change.");
+  IPAddress mcast(MCAST_A, MCAST_B, MCAST_C, MCAST_D);
+
+  udp.beginPacket(mcast, EL_PORT);
+  if (aircon) {
+    begin1EPC(EOJ_AC_CG,EOJ_AC_CC,EOJ_AC_IC, DEOJ_ALL_CG,DEOJ_ALL_CC,DEOJ_ALL_IC,
+              ESV_INF, EPC_POWER, 1);
+  } else {
+    begin1EPC(EOJ_LT_CG,EOJ_LT_CC,EOJ_LT_IC, DEOJ_ALL_CG,DEOJ_ALL_CC,DEOJ_ALL_IC,
+              ESV_INF, EPC_POWER, 1);
+  }
+  udp.write(on ? (uint8_t)ON_0x30 : (uint8_t)OFF_0x31);
+  udp.endPacket();
+  TID++;
+}
 
 /*
+
+// ------- 受信処理（省メモリ：バッファ最小） -------
+
 void setup() {
+  // できるだけSRAMを節約：Serialは使わない
+  byte mac[6] = {0xDE,0xAD,0xBE,0xEF,0xFE,0xED};
+  IPAddress ip(192,168,1,123);
   Ethernet.begin(mac, ip);
-  udp.begin(EL_PORT); // W5100/5500はマルチキャストJOIN不要で受信可（LAN内全受信）
+  udp.begin(EL_PORT);
   announce_join();
 }
 
 void loop() {
-  int psize = udp.parsePacket();
-  if (psize > 0) {
-    uint8_t buf[256];
-    int len = udp.read(buf, sizeof(buf));
-    IPAddress rip = udp.remoteIP();
-    uint16_t rport = udp.remotePort();
-    respond_instance_list_req(buf, len, rip, rport);
+  int p = udp.parsePacket();
+  if (p > 0) {
+    int n = udp.read(rxbuf, (p < (int)sizeof(rxbuf)) ? p : (int)sizeof(rxbuf));
+    respond_instance_list_req(rxbuf, n, udp.remoteIP(), udp.remotePort());
   }
+
+  // 例：何かのイベントで電源通知
+  // notify_power_change( bIsAircon, bIsOn);
 }
 */

@@ -1199,6 +1199,7 @@ int8_t GSwifi::setRegDomain (char regdomain) {
     return 0;
 }
 
+/*
 // returns -1 on error, >0 on success
 int8_t GSwifi::request(GSwifi::GSMETHOD method, const char *path, const char *body, uint16_t length, GSwifi::GSResponseHandler handler, uint8_t timeout, uint8_t is_binary) {
     char *cmd;
@@ -1341,6 +1342,7 @@ int8_t GSwifi::postBinary(const char *path, const char *body, uint16_t length, G
     return request( GSMETHOD_POST, path, body, length, handler, timeout_second, true );
 }
 
+*/
 char* GSwifi::hostname() {
     // reuse index: 0 area
     // this should be safe if we immediately call `strcpy( target, hostname() )`

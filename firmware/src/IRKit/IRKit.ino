@@ -90,7 +90,6 @@ void setup() {
 
     // add your own code here!!
 
-    el_announce_join();
 }
 
 void loop() {
@@ -151,6 +150,7 @@ void loop() {
 #endif
 
     // add your own code here!!
+    el_loop();
 }
 
 void wifi_hardware_reset () {
@@ -224,7 +224,9 @@ void process_commands() {
 void on_irkit_ready() {
     // blue: ready
     if (config::ledFeedback <= config::LED_VERBOSE) {
-        color.setLedColor( 0, 0, 1, FullColorLed::ALWAYS_ON ); 
+        color.setLedColor( 0, 0, 1, FullColorLed::ALWAYS_ON );
+
+        el_init();
     } else if (config::ledFeedback <= config::LED_QUIET) {
         color.setLedColor( 0, 0, 1, FullColorLed::BLINK_THEN_OFF, 1);
     } else {
