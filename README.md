@@ -15,7 +15,11 @@ Mac Addressの最後の二桁がab:cdだったとすると、ping IRKit**ABCD**.
 
 ## Locally available APIs
 
-APIは基本的にGET|POSTの /messagesしか使えないと思った方が良い。(/wifiも使えるようにしたかったが、与える文字列を生成するのに、Objective-Cの[ここのソース](https://github.com/irkit/ios-sdk/blob/master/IRKit/IRKit/IRKeys.m#L84)を読まないといけないらしく、ちょっと萎えているところ。)
+元々は[色々なAPIがある](https://getirkit.com/)が、このバージョンでは基本的にGET|POSTの /messagesしか使えない。(/wifiも使えるようにしたかったが、与える文字列を生成するのに、Objective-Cの[ここのソース](https://github.com/irkit/ios-sdk/blob/master/IRKit/IRKit/IRKeys.m#L84)を読まないといけないらしく、ちょっと萎えているところ。)
+
+メモリも足りないので、keys, clients, devices, door, appsは削除した。
+_request
+_response
 
 ### GET /messages
 最も新しい受信した赤外線信号を返します。

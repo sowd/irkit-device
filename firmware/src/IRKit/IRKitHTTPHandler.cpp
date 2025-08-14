@@ -102,6 +102,7 @@ static void parse_json( char letter ) {
                       &on_json_end );
 }
 
+/*
 static int8_t on_post_door_response(int8_t cid, uint16_t status_code, GSwifi::GSREQUESTSTATE state) {
     HTTPLOG_PRINT(P("< P /d ")); HTTPLOG_PRINTLN(status_code);
 
@@ -145,7 +146,7 @@ static int8_t on_post_door_response(int8_t cid, uint16_t status_code, GSwifi::GS
 
     return 0;
 }
-
+*/
 static int8_t on_get_messages_response(int8_t cid, uint16_t status_code, GSwifi::GSREQUESTSTATE state) {
     HTTPLOG_PRINT(P("< G /m ")); HTTPLOG_PRINTLN(status_code);
 
@@ -178,9 +179,10 @@ static int8_t on_get_messages_response(int8_t cid, uint16_t status_code, GSwifi:
             // there's already an ongoing polling request, so request again when that one finishes
         }
         break;
+    
     case HTTP_STATUSCODE_DISCONNECT:
         polling_cid = CID_UNDEFINED;
-        irkit_httpclient_start_polling( 5 );
+        //irkit_httpclient_start_polling( 5 );
         break;
     // heroku responds with 503 if longer than 30sec,
     // or when deploy occurs
@@ -190,14 +192,14 @@ static int8_t on_get_messages_response(int8_t cid, uint16_t status_code, GSwifi:
             polling_cid = CID_UNDEFINED;
             ring_put( &commands, COMMAND_CLOSE );
             ring_put( &commands, cid );
-            irkit_httpclient_start_polling( 5 );
+            //irkit_httpclient_start_polling( 5 );
         }
         break;
     }
 
     return 0;
 }
-
+/*
 static int8_t on_post_keys_response(int8_t cid, uint16_t status_code, GSwifi::GSREQUESTSTATE state) {
     HTTPLOG_PRINT(P("< P /k ")); HTTPLOG_PRINTLN(status_code);
 
@@ -235,7 +237,7 @@ static int8_t on_post_keys_response(int8_t cid, uint16_t status_code, GSwifi::GS
 
     return 0;
 }
-
+*/
 static int8_t on_post_messages_response(int8_t cid, uint16_t status_code, GSwifi::GSREQUESTSTATE state) {
     HTTPLOG_PRINT(P("< P /p ")); HTTPLOG_PRINTLN(status_code);
 
@@ -320,7 +322,7 @@ static int8_t on_post_messages_request(int8_t cid, GSwifi::GSREQUESTSTATE state)
 
     return 0;
 }
-
+/*
 static int8_t on_post_keys_request(int8_t cid, GSwifi::GSREQUESTSTATE state) {
     if (state == GSwifi::GSREQUESTSTATE_RECEIVED) {
         // don't close other client requests, we can handle multiple concurrent client requests
@@ -334,7 +336,7 @@ static int8_t on_post_keys_request(int8_t cid, GSwifi::GSREQUESTSTATE state) {
         ring_put( &commands, COMMAND_POST_KEYS );
     }
 }
-
+*/
 static int8_t on_post_wifi_request(uint8_t cid, GSwifi::GSREQUESTSTATE state) {
     if (state == GSwifi::GSREQUESTSTATE_BODY_START) {
         keys.clear();
@@ -386,11 +388,12 @@ static int8_t on_request(int8_t cid, int8_t routeid, GSwifi::GSREQUESTSTATE stat
     case 0: // POST /messages
         return on_post_messages_request(cid, state);
 
+    /*
     case 1: // POST /keys
         // when client requests for a new key,
         // we request server for one, and respond to client with the result from server
         return on_post_keys_request(cid, state);
-
+    */
     case 2: // GET /messages
         return on_get_messages_request(cid, state);
 
@@ -403,6 +406,7 @@ static int8_t on_request(int8_t cid, int8_t routeid, GSwifi::GSREQUESTSTATE stat
     return -1;
 }
 
+/*
 int8_t irkit_httpclient_post_door() {
     // devicekey=[0-9A-F]{32}&hostname=IRKit%%%%
     char body[POST_DOOR_BODY_LENGTH+1];
@@ -468,6 +472,7 @@ int8_t irkit_httpclient_post_keys() {
 void irkit_httpclient_start_polling(uint8_t delay) {
     TIMER_START(polling_timer, delay);
 }
+*/
 
 void irkit_httpserver_register_handler() {
     gs.clearRoutes();
@@ -475,7 +480,7 @@ void irkit_httpserver_register_handler() {
     // 0
     gs.registerRoute( GSwifi::GSMETHOD_POST, P("/messages") );
     // 1
-    gs.registerRoute( GSwifi::GSMETHOD_POST, P("/keys") );
+    //gs.registerRoute( GSwifi::GSMETHOD_POST, P("/keys") );
     // 2
     gs.registerRoute( GSwifi::GSMETHOD_GET,  P("/messages") );
     // 3

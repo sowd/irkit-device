@@ -33,7 +33,7 @@
 #include "log.h"
 #include "config.h"
 
-//#include "echonet.h"
+#include "echonet.h"
 
 static struct long_press_button_state_t long_press_button_state;
 static volatile uint8_t reconnect_timer = TIMER_OFF;
@@ -90,7 +90,7 @@ void setup() {
 
     // add your own code here!!
 
-    //el_announce_join();
+    el_announce_join();
 }
 
 void loop() {
@@ -183,9 +183,11 @@ void process_commands() {
         ring_get( &commands, &command, 1 );
 
         switch (command) {
+        /*
         case COMMAND_POST_KEYS:
             irkit_httpclient_post_keys();
             break;
+        */
         case COMMAND_SETUP:
             irkit_http_init();
             gs.setup( &on_disconnect, &on_reset );
@@ -198,12 +200,14 @@ void process_commands() {
             ring_get( &commands, &command, 1 );
             gs.close(command);
             break;
+        /*
         case COMMAND_START_POLLING:
             irkit_httpclient_start_polling( 0 );
             break;
         case COMMAND_POST_DOOR:
             irkit_httpclient_post_door();
             break;
+        */
         case COMMAND_SETREGDOMAIN:
             {
                 char regdomain;
@@ -245,7 +249,7 @@ void on_ir_receive() {
             } else {
                 color.off();
             }
-        } else {
+        }/* else {
             int8_t cid = irkit_httpclient_post_messages();
             if (cid >= 0) {
                 if (config::ledFeedback <= config::LED_QUIET) {
@@ -255,7 +259,7 @@ void on_ir_receive() {
                     color.off();
                 }
             }
-        }
+        }*/
     }
 }
 
