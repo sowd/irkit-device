@@ -33,6 +33,8 @@
 #include "log.h"
 #include "config.h"
 
+//#include "echonet.h"
+
 static struct long_press_button_state_t long_press_button_state;
 static volatile uint8_t reconnect_timer = TIMER_OFF;
 static char commands_data[COMMAND_QUEUE_SIZE];
@@ -87,6 +89,8 @@ void setup() {
     wifi_hardware_reset();
 
     // add your own code here!!
+
+    //el_announce_join();
 }
 
 void loop() {
@@ -329,6 +333,7 @@ void connect() {
             IR_state( IR_IDLE );
             on_irkit_ready();
         } else {
+            /*
             // start mDNS
             gs.setupMDNS();
     
@@ -340,6 +345,7 @@ void connect() {
                 ring_put( &commands, COMMAND_START_POLLING );
                 on_irkit_ready();
             }
+            */
         }
     }
     else {

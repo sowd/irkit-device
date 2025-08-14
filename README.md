@@ -1,6 +1,7 @@
 # Local IRKit Device
 
-IRKitのクラウドサポートがとっくに終わってるので、[公式リポジトリ](https://github.com/irkit/device/tree/master)をForkして、ある程度[この人](https://zenn.dev/ivry/articles/813566710f1417)に従って、[公式でマージされていないプルリク](https://github.com/irkit/device/pull/6)をマージしたり、それでも残っているクラウドコードを修正したり、WiFiのSSIDとかをソース内にハードコードするようにするなどの変更を加えたもの。
+[IRKit](https://getirkit.com/)のクラウドサポートがとっくに終わってるので、[公式リポジトリ](https://github.com/irkit/device/tree/master)をForkして、ある程度[この人](https://zenn.dev/ivry/articles/813566710f1417)に従って、[公式でマージされていないプルリク](https://github.com/irkit/device/pull/6)をマージしたり、クラウドをoffにしてもアクセスしてクラッシュするコードを修正したり、WiFiのSSIDとかをソース内にハードコードするようにするなどの変更を加えたもの。
+
 Arduinoが必要。Arduino Leonardoボードとして使えば良い。
 
 ## WiFi情報 ハードコード方法
@@ -9,7 +10,7 @@ const.hで #define されている **MY_SSID** と **MY_PASSWORD** を変更
 
 ## IRKitのIPアドレスの探し方
 
-Mac Addressの最後の二桁がAB:CDだったとすると、ping IRKit**ABCD**.lan で見つかるはず。
+Mac Addressの最後の二桁がab:cdだったとすると、ping IRKit**ABCD**.lan で見つかるはず。
 見つからなければ、ルートにある [irkit_finder.sh](./irkit_finder.sh) を使ってみる(要sudo)。
 
 ## Locally available APIs

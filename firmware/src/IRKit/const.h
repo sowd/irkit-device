@@ -34,9 +34,7 @@
 // length = 10 characters + NULL
 #define EEPROM_LIMITEDAPPASSWORD_LENGTH  11
 
-#define MY_SSID "[YOUR WIFI SSID]"
-#define MY_PASSWORD "[YOUR WIFI PASSWORD]"
-
-
+//#define MY_SSID "[YOUR WIFI SSID]"
+//#define MY_PASSWORD "[YOUR WIFI PASSWORD]"
 
 #endif

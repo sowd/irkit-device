@@ -504,6 +504,7 @@ void irkit_http_loop() {
         return;
     }
 
+    /*
     // long poll
     if (TIMER_FIRED(polling_timer)) {
         TIMER_STOP(polling_timer);
@@ -530,4 +531,5 @@ void irkit_http_loop() {
     if (TIMER_FIRED(suspend_polling_timer)) {
         TIMER_STOP(suspend_polling_timer);
     }
+    */
 }
