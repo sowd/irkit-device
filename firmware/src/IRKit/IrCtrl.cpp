@@ -515,19 +515,40 @@ void IR_initialize (IRReceiveCallback _on_receive)
 
 void IR_dump (void)
 {
-    // IRLOG_PRINT(P("IR.s:")); IRLOG_PRINTLN(IrCtrl.state);
-    // IRLOG_PRINT(P(".l:"));   IRLOG_PRINTLN(IrCtrl.len,HEX);
-    // IRLOG_PRINT(P(".t:"));   IRLOG_PRINTLN(IrCtrl.trailer_count,HEX);
-    // IRLOG_PRINT(P(".x:"));   IRLOG_PRINTLN(IrCtrl.tx_index,HEX);
-    // IRLOG_PRINT(P(".r:"));   IRLOG_PRINTLN(IrCtrl.recv_timer);
-    // IRLOG_PRINT(P(".x:"));   IRLOG_PRINTLN(IrCtrl.xmit_timer);
-    // IRLOG_PRINT(P("p.l:"));  IRLOG_PRINTLN(IR_packedlength(),HEX);
-    // for (uint16_t i=0; i<IR_packedlength(); i++) {
-    //     IRLOG_PRINT((uint8_t)sharedbuffer[i], HEX);
-    //     IRLOG_PRINT(" ");
-    // }
-    // IRLOG_PRINTLN();
-    // IRLOG_PRINT("tree:");
-    // IRLOG_PRINTLN(tree[ 0 ]);
-    // IRLOG_PRINTLN(tree[ 1 ]);
+
+    IRLOG_PRINT(P("IR.s:")); IRLOG_PRINTLN(IrCtrl.state);
+    IRLOG_PRINT(P(".l:"));   IRLOG_PRINTLN(IrCtrl.len);
+    IRLOG_PRINT(P(".t:"));   IRLOG_PRINTLN(IrCtrl.trailer_count);
+    IRLOG_PRINT(P(".x:"));   IRLOG_PRINTLN(IrCtrl.tx_index);
+    IRLOG_PRINT(P(".r:"));   IRLOG_PRINTLN(IrCtrl.recv_timer);
+    IRLOG_PRINT(P(".x:"));   IRLOG_PRINTLN(IrCtrl.xmit_timer);
+    IRLOG_PRINT(P("p.l:"));  IRLOG_PRINTLN(IR_packedlength());
+    IRLOG_PRINT("[");
+    for (uint16_t i=0; i<IR_packedlength(); i++) {
+        if( i!=0 )
+            IRLOG_PRINT(",");
+        IRLOG_PRINT((uint8_t)sharedbuffer[i]);
+    }
+    IRLOG_PRINT("]");
+}
+
+void IR_dump_orig (void)
+{
+/*
+    IRLOG_PRINT(P("IR.s:")); IRLOG_PRINTLN(IrCtrl.state);
+    IRLOG_PRINT(P(".l:"));   IRLOG_PRINTLN(IrCtrl.len,HEX);
+    IRLOG_PRINT(P(".t:"));   IRLOG_PRINTLN(IrCtrl.trailer_count,HEX);
+    IRLOG_PRINT(P(".x:"));   IRLOG_PRINTLN(IrCtrl.tx_index,HEX);
+    IRLOG_PRINT(P(".r:"));   IRLOG_PRINTLN(IrCtrl.recv_timer);
+    IRLOG_PRINT(P(".x:"));   IRLOG_PRINTLN(IrCtrl.xmit_timer);
+    IRLOG_PRINT(P("p.l:"));  IRLOG_PRINTLN(IR_packedlength(),HEX);
+    for (uint16_t i=0; i<IR_packedlength(); i++) {
+        IRLOG_PRINT((uint8_t)sharedbuffer[i], HEX);
+        IRLOG_PRINT(" ");
+    }
+    IRLOG_PRINTLN();
+    IRLOG_PRINT("tree:");
+    IRLOG_PRINTLN(tree[ 0 ]);
+    IRLOG_PRINTLN(tree[ 1 ]);
+    */
 }

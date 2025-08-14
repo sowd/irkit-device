@@ -234,13 +234,22 @@ void on_ir_receive() {
             IRLOG_PRINTLN("!E31");
             return;
         }
-        int8_t cid = irkit_httpclient_post_messages();
-        if (cid >= 0) {
+        if(!config::useCloudControl){
             if (config::ledFeedback <= config::LED_QUIET) {
                 FullColorLed::LightMode lightMode = (config::ledFeedback == config::LED_VERBOSE)? FullColorLed::BLINK_THEN_ON : FullColorLed::BLINK_THEN_OFF;
                 color.setLedColor( 0, 0, 1, lightMode, 1 ); // received: blue blink for 1sec
             } else {
                 color.off();
+            }
+        } else {
+            int8_t cid = irkit_httpclient_post_messages();
+            if (cid >= 0) {
+                if (config::ledFeedback <= config::LED_QUIET) {
+                    FullColorLed::LightMode lightMode = (config::ledFeedback == config::LED_VERBOSE)? FullColorLed::BLINK_THEN_ON : FullColorLed::BLINK_THEN_OFF;
+                    color.setLedColor( 0, 0, 1, lightMode, 1 ); // received: blue blink for 1sec
+                } else {
+                    color.off();
+                }
             }
         }
     }

@@ -54,6 +54,15 @@ void Keys::load()
     if (! isCRCOK()) {
         clear();
     }
+
+/*
+    set(GSSECURITY_WPA2_PSK,
+        PB(MY_SSID,1),
+        PB(MY_PASSWORD,2));
+        setKey(P("5284CF0D43994784897ECAB3D9935498")); 
+    save();
+*/
+
 }
 
 bool Keys::isCRCOK()
